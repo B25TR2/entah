@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surat Cinta Spesial Untukmu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-pink: #ff85a1;
+            --soft-pink: #fbc2eb;
+            --paper-color: #fffdfa;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            overflow: hidden;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        /* Animasi Hati Berjatuhan */
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            color: #ff4d6d;
+            pointer-events: none;
+            z-index: 5;
+            animation: float 4s ease-in infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Gaya Amplop */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+            z-index: 10;
+        }
+
+        .envelope-wrapper:active {
+            transform: scale(0.95);
+        }
+
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: #f08080;
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .envelope::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            z-index: 4;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 100px solid #f08080;
+            transform-origin: top;
+            transition: transform 0.4s 0.4s ease;
+        }
+
+        .envelope.open::before {
+            transform: rotateX(180deg);
+            z-index: 0;
+        }
+
+        .envelope-inner {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: #f08080;
+            clip-path: polygon(0 0, 50% 50%, 100% 0, 100% 100%, 0 100%);
+            z-index: 3;
+            border-radius: 0 0 5px 5px;
+        }
+
+        /* Gaya Kertas di Dalam Amplop */
+        .letter-small {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: var(--paper-color);
+            padding: 15px;
+            transition: transform 0.6s ease;
+            z-index: 2;
+            transform: translateY(0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .envelope.open .letter-small {
+            transform: translateY(-130px);
+            z-index: 5;
+            height: 200px;
+        }
+
+        .typing-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.2rem;
+            color: #d63384;
+            line-height: 1.4;
+        }
+
+        /* Modal Surat Lengkap & Player */
+        #letterModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .full-letter {
+            background: var(--paper-color);
+            width: 100%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 24px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.5s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 16px;
+            margin-top: 20px;
+            background: #000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #999;
+            cursor: pointer;
+            font-size: 30px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .close-btn:hover { color: #f08080; }
+    </style>
+</head>
+<body>
+
+    <div id="heart-container"></div>
+
+    <div class="flex flex-col items-center">
+        <div id="instruction" class="mb-10 text-white font-semibold text-xl animate-bounce drop-shadow-md">
+            Ketuk amplopnya ❤️
+        </div>
+
+        <div class="envelope-wrapper" onclick="openEnvelope()">
+            <div class="envelope" id="envelope">
+                <div class="letter-small">
+                    <p class="text-[10px] text-gray-400 mb-1">Ada pesan untukmu...</p>
+                    <div class="typing-text" id="typewriter"></div>
+                </div>
+                <div class="envelope-inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Surat Lengkap -->
+    <div id="letterModal">
+        <div class="full-letter">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            
+            <h2 class="font-bold text-3xl text-pink-600 mb-6 italic text-center" style="font-family: 'Dancing Script', cursive;">Surat Cinta Untukmu</h2>
+            
+            <div class="space-y-4 text-gray-700 leading-relaxed text-sm sm:text-base">
+                <p>Hai kamu,</p>
+                <p>Aku pernah berpikir tentang hidupku tanpa ada dirimu, dapatkah lebih indah dari yang kujalani hari ini?</p>
+                <p>Sejak kamu hadir, setiap lirik lagu ini jadi terasa punya makna baru. Kamu adalah alasan kenapa aku ingin menghabiskan sisa cintaku hanya untukmu.</p>
+                <p>Dengarkan lagu ini ya, ini caraku mengungkapkan apa yang sulit diucapkan lewat kata-kata.</p>
+            </div>
+
+            <!-- Video Player Section -->
+            <div class="video-container" id="player-slot">
+                <!-- YouTube iframe will be injected here -->
+            </div>
+
+            <div class="mt-8 border-t border-pink-100 pt-4 text-center">
+                <p class="text-xs text-pink-400 italic">"Aku habiskan sisa cintaku hanya untukmu..."</p>
+                <p class="text-[10px] text-gray-300 mt-2">Dibuat dengan segenap rasa ❤️</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pesan yang akan diketik otomatis di amplop
+        const message = "Untuk seseorang yang paling spesial... ❤️";
+        const typewriterElement = document.getElementById('typewriter');
+        const envelope = document.getElementById('envelope');
+        const instruction = document.getElementById('instruction');
+        const heartContainer = document.getElementById('heart-container');
+        const playerSlot = document.getElementById('player-slot');
+        const modal = document.getElementById('letterModal');
+        
+        let charIndex = 0;
+        let isProcessing = false;
+
+        // Fungsi membuat hati melayang
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.bottom = '-50px';
+            heart.style.animationDuration = Math.random() * 2 + 3 + 's';
+            heart.style.fontSize = Math.random() * 10 + 15 + 'px';
+            heartContainer.appendChild(heart);
+
+            setTimeout(() => { heart.remove(); }, 5000);
+        }
+
+        setInterval(createHeart, 400);
+
+        // Efek mengetik
+        function startTyping() {
+            if (charIndex < message.length) {
+                typewriterElement.innerHTML += message.charAt(charIndex);
+                charIndex++;
+                setTimeout(startTyping, 100);
+            } else {
+                // Setelah selesai mengetik, buka surat lengkap setelah jeda sebentar
+                setTimeout(() => {
+                    modal.style.display = 'flex';
+                }, 1200);
+            }
+        }
+
+        // Fungsi membuka amplop
+        function openEnvelope() {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            envelope.classList.add('open');
+            instruction.classList.add('opacity-0');
+            
+            // Injeksi Video Player dengan AutoPlay
+            // ID Video: MNx5wmp0L8o
+            playerSlot.innerHTML = `
+                <iframe 
+                    src="https://www.youtube.com/embed/MNx5wmp0L8o?autoplay=1&rel=0&modestbranding=1" 
+                    title="YouTube video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            `;
+            
+            setTimeout(() => {
+                startTyping();
+            }, 1000);
+        }
+
+        // Fungsi menutup modal
+        function closeModal() {
+            modal.style.display = 'none';
+            // Stop video saat ditutup agar tidak berisik
+            playerSlot.innerHTML = '';
+        }
+
+        // Klik di luar modal untuk menutup
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
+
