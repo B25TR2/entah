@@ -1,354 +1,115 @@
-<!-- GANTI SELURUH ISI FILE index.html DENGAN INI -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dompet AI Pintar</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Keuangan Pribadi</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .loader { border-top-color: #3B82F6; animation: spinner 1s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center; }
+        h1 { font-size: 18px; color: #555; }
+        .saldo { font-size: 32px; font-weight: bold; color: #2ecc71; margin: 10px 0; }
+        .stats { display: flex; justify-content: space-between; font-size: 14px; }
+        .red { color: #e74c3c; } .green { color: #27ae60; }
+        
+        .input-group { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #2980b9; }
+
+        .history-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .history-meta { font-size: 10px; color: #888; }
     </style>
 </head>
-<body class="text-gray-800 pb-20 select-none">
+<body>
 
-    <!-- Header dengan Tombol Refresh -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6 rounded-b-3xl shadow-lg relative overflow-hidden">
-        
-        <!-- Tombol Refresh Pojok Kanan Atas -->
-        <button onclick="loadData()" class="absolute top-6 right-6 bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-full transition active:scale-90 z-20">
-            <i class="fas fa-sync-alt text-white animate-none" id="refreshIcon"></i>
-        </button>
-
-        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
-        <div class="relative z-10 mt-2">
-            <h1 class="text-sm opacity-90 font-medium">Total Saldo</h1>
-            <div id="saldoDisplay" class="text-4xl font-bold mt-1 tracking-tight">Rp 0</div>
-            
-            <div class="flex mt-6 space-x-3">
-                <div class="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl flex-1 border border-white border-opacity-10">
-                    <div class="text-xs opacity-90 mb-1 flex items-center gap-1"><i class="fas fa-arrow-down text-green-300"></i> Pemasukan</div>
-                    <div id="masukDisplay" class="font-bold text-lg">Rp 0</div>
-                </div>
-                <div class="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl flex-1 border border-white border-opacity-10">
-                    <div class="text-xs opacity-90 mb-1 flex items-center gap-1"><i class="fas fa-arrow-up text-red-300"></i> Pengeluaran</div>
-                    <div id="keluarDisplay" class="font-bold text-lg">Rp 0</div>
-                </div>
-            </div>
+    <div class="card">
+        <h1>Saldo Saat Ini</h1>
+        <div class="saldo" id="saldo">Loading...</div>
+        <div class="stats">
+            <span class="green">Masuk: <span id="masuk">-</span></span>
+            <span class="red">Keluar: <span id="keluar">-</span></span>
         </div>
     </div>
 
-    <!-- Container Utama -->
-    <div class="max-w-md mx-auto px-5 -mt-4 relative z-20 space-y-5">
-
-        <!-- Target Card -->
-        <div class="bg-white rounded-2xl shadow-sm p-5 cursor-pointer hover:shadow-md transition border border-gray-100" onclick="showTargetModal()">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide flex items-center gap-2">
-                    <i class="fas fa-bullseye text-blue-500"></i> Target
-                </h3>
-                <span id="targetPercent" class="text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">0%</span>
-            </div>
-            <div class="flex justify-between items-end mb-2">
-                 <div class="text-lg font-bold text-gray-800" id="targetName">Belum diset</div>
-                 <div class="text-xs text-gray-500 mb-1">Goal: <span id="targetGoal">Rp 0</span></div>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                <div id="progressBar" class="bg-blue-500 h-3 rounded-full transition-all duration-1000 ease-out relative" style="width: 0%">
-                    <div class="absolute inset-0 bg-white opacity-20 w-full animate-pulse"></div>
-                </div>
-            </div>
-            <div class="text-xs text-gray-400 mt-2 text-right">
-                Kurang: <span id="targetKurang" class="font-medium text-gray-600">Rp 0</span>
-            </div>
-        </div>
-
-        <!-- Tombol Aksi -->
-        <div class="grid grid-cols-2 gap-4">
-            <button onclick="openModal('Pemasukan')" class="group bg-white border border-green-100 hover:border-green-300 p-4 rounded-2xl shadow-sm hover:shadow-md flex flex-col items-center transition active:scale-95">
-                <div class="bg-green-100 p-3 rounded-full mb-2 group-hover:bg-green-200 transition">
-                    <i class="fas fa-plus text-green-600 text-xl"></i>
-                </div>
-                <span class="font-bold text-gray-700 text-sm">Masuk</span>
-            </button>
-            <button onclick="openModal('Pengeluaran')" class="group bg-white border border-red-100 hover:border-red-300 p-4 rounded-2xl shadow-sm hover:shadow-md flex flex-col items-center transition active:scale-95">
-                <div class="bg-red-100 p-3 rounded-full mb-2 group-hover:bg-red-200 transition">
-                    <i class="fas fa-minus text-red-600 text-xl"></i>
-                </div>
-                <span class="font-bold text-gray-700 text-sm">Keluar</span>
-            </button>
-        </div>
-
-        <!-- Riwayat Transaksi -->
-        <div>
-            <div class="flex justify-between items-center mb-3 mt-2 px-1">
-                <h3 class="font-bold text-gray-800 text-lg">Riwayat</h3>
-                <button onclick="resetDataConfirm()" class="text-[10px] bg-red-50 text-red-500 px-2 py-1 rounded hover:bg-red-100 transition">RESET DATA</button>
-            </div>
-            <div id="historyList" class="space-y-3 pb-8">
-                <div class="text-center text-gray-400 py-6 text-sm bg-white rounded-xl border border-dashed border-gray-200">Memuat data...</div>
-            </div>
-        </div>
+    <div class="input-group">
+        <h3>Tambah Transaksi</h3>
+        <select id="jenis">
+            <option value="Pemasukan">📥 Pemasukan</option>
+            <option value="Pengeluaran">📤 Pengeluaran</option>
+        </select>
+        <input type="number" id="nominal" placeholder="Nominal (contoh: 50000)">
+        <input type="text" id="ket" placeholder="Keterangan (contoh: Makan)">
+        <button onclick="kirimData()" id="btnKirim">Simpan Data</button>
     </div>
 
-    <!-- MODAL INPUT -->
-    <div id="inputModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-end sm:items-center justify-center transition-all duration-300 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md p-6 rounded-t-3xl sm:rounded-2xl shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0" id="inputModalContent">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Input Data</h2>
-                <button onclick="closeModal()" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fas fa-times text-gray-500"></i></button>
-            </div>
-            
-            <form id="transForm" onsubmit="submitTransaction(event)">
-                <input type="hidden" id="transType">
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nominal</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-3.5 text-gray-400 font-bold">Rp</span>
-                        <input type="number" id="transAmount" class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-lg font-bold text-gray-800 transition" placeholder="0" required>
-                    </div>
-                </div>
-                <div class="mb-8">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Untuk Apa?</label>
-                    <input type="text" id="transNote" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition" placeholder="Makan, Gaji, Bonus..." required>
-                </div>
-                <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 hover:shadow-xl transition transform active:scale-[0.98] flex justify-center items-center gap-2">
-                    <span>SIMPAN DATA</span> <i class="fas fa-arrow-right"></i>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL TARGET -->
-    <div id="targetModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-xs p-6 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-200" id="targetModalContent">
-            <h2 class="text-lg font-bold mb-4 text-center text-gray-800">🎯 Set Target Impian</h2>
-            <form onsubmit="submitTarget(event)">
-                <div class="mb-3">
-                    <label class="text-xs font-bold text-gray-500 ml-1">Nama Barang</label>
-                    <input type="text" id="targetNameInput" class="w-full p-3 bg-gray-50 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="Contoh: iPhone 15">
-                </div>
-                <div class="mb-6">
-                    <label class="text-xs font-bold text-gray-500 ml-1">Harga (Rp)</label>
-                    <input type="number" id="targetPriceInput" class="w-full p-3 bg-gray-50 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="Contoh: 15000000">
-                </div>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="document.getElementById('targetModal').classList.add('hidden')" class="flex-1 py-3 text-gray-500 hover:bg-gray-100 rounded-xl font-semibold transition">Batal</button>
-                    <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-blue-700 transition">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- AI TOAST NOTIFICATION -->
-    <div id="aiToast" class="fixed top-6 left-4 right-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-2xl shadow-2xl transform -translate-y-40 transition-all duration-500 z-[60] flex items-start gap-4 border border-gray-700 backdrop-blur-md">
-        <div class="bg-blue-600 p-2 rounded-lg shrink-0">
-            <i class="fas fa-robot text-white text-lg"></i>
-        </div>
-        <div>
-            <h4 class="font-bold text-xs text-blue-300 uppercase tracking-wider mb-1">Komentar AI</h4>
-            <p id="aiMessage" class="text-sm font-medium leading-relaxed text-gray-100">...</p>
-        </div>
-    </div>
+    <h3>Riwayat Terakhir</h3>
+    <div id="riwayatList"></div>
 
     <script>
-        // --- LOGIC UTAMA ---
+        // GANTI URL INI DENGAN HASIL DEPLOY GOOGLE SCRIPT ANDA
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHhn-HgotWukaL-XK6ArgFqkLdgaB-YDFIX7fJtPvNbep78ZRv83WPXwbq_zPrjzuYkA/exec";
 
-        window.onload = function() {
-            loadData();
-        };
+        // 1. Ambil Data saat Web Dibuka
+        async function loadData() {
+            try {
+                let response = await fetch(SCRIPT_URL);
+                let data = await response.json();
+                
+                document.getElementById("saldo").innerText = data.saldo;
+                document.getElementById("masuk").innerText = data.masuk;
+                document.getElementById("keluar").innerText = data.keluar;
 
-        function loadData() {
-            const refreshIcon = document.getElementById('refreshIcon');
-            refreshIcon.classList.add('fa-spin'); // Animasi loading
-
-            if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-                console.warn("Mode Preview");
-                setTimeout(() => refreshIcon.classList.remove('fa-spin'), 1000);
-                return;
-            }
-
-            google.script.run.withSuccessHandler((data) => {
-                renderDashboard(data);
-                refreshIcon.classList.remove('fa-spin'); // Stop animasi
-            }).withFailureHandler((err) => {
-                alert("Gagal memuat data: " + err);
-                refreshIcon.classList.remove('fa-spin');
-            }).getDashboardData();
-        }
-
-        function renderDashboard(data) {
-            // Update Angka dengan animasi counter sederhana (langsung berubah)
-            document.getElementById('saldoDisplay').innerText = formatRupiah(data.saldo);
-            document.getElementById('masukDisplay').innerText = formatRupiah(data.masuk);
-            document.getElementById('keluarDisplay').innerText = formatRupiah(data.keluar);
-
-            // Update Target
-            document.getElementById('targetName').innerText = data.target.nama;
-            document.getElementById('targetGoal').innerText = formatRupiah(data.target.nominal);
-            
-            let percent = 0;
-            if (data.target.nominal > 0) {
-                percent = Math.round((data.saldo / data.target.nominal) * 100);
-            }
-            // Clamp percentage
-            percent = Math.max(0, Math.min(100, percent));
-            
-            document.getElementById('targetPercent').innerText = percent + "%";
-            document.getElementById('progressBar').style.width = percent + "%";
-            
-            // Hitung Kurang
-            let kurang = data.target.nominal - data.saldo;
-            if (kurang < 0) kurang = 0;
-            document.getElementById('targetKurang').innerText = formatRupiah(kurang);
-
-            // Update History List
-            const list = document.getElementById('historyList');
-            list.innerHTML = "";
-            
-            if (data.history.length === 0) {
-                list.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-8 text-gray-300">
-                        <i class="fas fa-clipboard-list text-4xl mb-2"></i>
-                        <span class="text-sm">Belum ada transaksi</span>
-                    </div>`;
-            } else {
-                data.history.forEach((row, index) => {
-                    const isMasuk = row[1] === "Pemasukan";
-                    // Style dinamis
-                    const iconBg = isMasuk ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600";
-                    const iconClass = isMasuk ? "fa-arrow-down" : "fa-arrow-up";
-                    const amountClass = isMasuk ? "text-green-600" : "text-red-600";
-                    const sign = isMasuk ? "+" : "-";
-
-                    const item = `
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center justify-between hover:bg-gray-50 transition animate-fade-in" style="animation-delay: ${index * 50}ms">
-                            <div class="flex items-center space-x-4">
-                                <div class="${iconBg} w-10 h-10 rounded-full flex items-center justify-center shadow-sm shrink-0">
-                                    <i class="fas ${iconClass} text-sm"></i>
-                                </div>
-                                <div>
-                                    <div class="font-bold text-gray-800 text-sm line-clamp-1">${row[3]}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">${row[0]}</div>
-                                </div>
+                let html = "";
+                data.riwayat.forEach(item => {
+                    let warna = item.jenis == "Pemasukan" ? "green" : "red";
+                    html += `
+                        <div class="history-item" style="border-left: 4px solid ${warna == 'green' ? '#2ecc71' : '#e74c3c'}">
+                            <div>
+                                <strong>${item.ket}</strong><br>
+                                <span class="history-meta">${item.tanggal}</span>
                             </div>
-                            <div class="font-bold ${amountClass} whitespace-nowrap text-sm">
-                                ${sign} ${formatRupiah(row[2])}
+                            <div style="color: ${warna == 'green' ? '#27ae60' : '#c0392b'}; font-weight:bold;">
+                                ${item.nominal}
                             </div>
-                        </div>
-                    `;
-                    list.innerHTML += item;
+                        </div>`;
                 });
+                document.getElementById("riwayatList").innerHTML = html;
+            } catch (e) {
+                console.log("Error:", e);
+                document.getElementById("saldo").innerText = "Error Koneksi";
             }
         }
 
-        // --- MODAL & FORM HANDLERS ---
+        // 2. Kirim Data ke Google Sheet
+        function kirimData() {
+            let jenis = document.getElementById("jenis").value;
+            let nominal = document.getElementById("nominal").value;
+            let ket = document.getElementById("ket").value;
+            let btn = document.getElementById("btnKirim");
 
-        function openModal(type) {
-            const modal = document.getElementById('inputModal');
-            const content = document.getElementById('inputModalContent');
-            
-            modal.classList.remove('hidden');
-            // Sedikit delay agar transisi CSS berjalan
-            requestAnimationFrame(() => {
-                content.classList.remove('translate-y-full');
-            });
-            
-            document.getElementById('transType').value = type;
-            const title = type === 'Pemasukan' ? '💰 Pemasukan Baru' : '💸 Pengeluaran Baru';
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalTitle').className = type === 'Pemasukan' ? 'text-xl font-bold text-green-600' : 'text-xl font-bold text-red-600';
-            
-            document.getElementById('transAmount').value = '';
-            document.getElementById('transNote').value = '';
-            setTimeout(() => document.getElementById('transAmount').focus(), 300);
-        }
+            if(!nominal) return alert("Isi nominal dulu!");
 
-        function closeModal() {
-            const modal = document.getElementById('inputModal');
-            const content = document.getElementById('inputModalContent');
-            
-            content.classList.add('translate-y-full');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
-
-        function submitTransaction(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmit');
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+            btn.innerText = "Mengirim...";
             btn.disabled = true;
-            btn.classList.add('opacity-75');
 
-            const type = document.getElementById('transType').value;
-            const amount = document.getElementById('transAmount').value;
-            const note = document.getElementById('transNote').value;
-
-            google.script.run.withSuccessHandler((res) => {
-                btn.innerHTML = originalText;
+            // Gunakan mode no-cors untuk kirim data ke GAS (keterbatasan browser)
+            // Atau pakai fetch POST biasa dengan payload text
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "input_web", jenis, nominal, ket })
+            }).then(() => {
+                alert("Berhasil!");
+                location.reload(); // Refresh halaman untuk update saldo
+            }).catch(e => {
+                alert("Gagal kirim.");
+                btn.innerText = "Simpan Data";
                 btn.disabled = false;
-                btn.classList.remove('opacity-75');
-                closeModal();
-                loadData(); // Refresh data otomatis
-                showToast(res.message);
-            }).addTransaction(type, amount, note);
+            });
         }
 
-        // --- TARGET HANDLERS ---
-
-        function showTargetModal() {
-            document.getElementById('targetModal').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('targetModalContent').classList.remove('scale-95');
-                document.getElementById('targetModalContent').classList.add('scale-100');
-            }, 10);
-        }
-
-        function submitTarget(e) {
-            e.preventDefault();
-            const name = document.getElementById('targetNameInput').value;
-            const price = document.getElementById('targetPriceInput').value;
-
-            google.script.run.withSuccessHandler(() => {
-                document.getElementById('targetModal').classList.add('hidden');
-                loadData();
-            }).saveTarget(price, name);
-        }
-
-        // --- UTILS ---
-
-        function resetDataConfirm() {
-            if(confirm("Yakin hapus semua data? Data akan dipindah ke sheet Backup.")) {
-                google.script.run.withSuccessHandler(() => {
-                    loadData();
-                    showToast("Data berhasil direset!");
-                }).resetData();
-            }
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('aiToast');
-            document.getElementById('aiMessage').innerText = msg;
-            toast.classList.remove('-translate-y-40');
-            
-            // Auto hide
-            setTimeout(() => {
-                toast.classList.add('-translate-y-40');
-            }, 6000);
-        }
-
-        function formatRupiah(angka) {
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-        }
-
+        // Jalankan saat load
+        loadData();
     </script>
 </body>
 </html>
