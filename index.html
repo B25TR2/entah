@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src * 'self' 'unsafe-inline' blob: data: gap:; frame-src * 'self' blob: data: gap:;">
+    
     <title>Dompetku</title>
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --white: #ffffff; --green: #10b981; --red: #ef4444; }
@@ -82,7 +84,7 @@
 
     <script>
         // --- KONFIGURASI ---
-        // Ganti URL di bawah dengan Web App URL Anda
+        // Ganti URL ini dengan URL Web App Google Script yang BARU (New Version)
         const API_URL = "https://script.google.com/macros/s/AKfycbwHhn-HgotWukaL-XK6ArgFqkLdgaB-YDFIX7fJtPvNbep78ZRv83WPXwbq_zPrjzuYkA/exec";
 
         const loader = document.getElementById("loader");
@@ -93,6 +95,11 @@
                 let res = await fetch(API_URL);
                 let data = await res.json();
                 
+                if(data.error) {
+                    alert("Error dari Server: " + data.pesan);
+                    return;
+                }
+
                 // Update Angka
                 document.getElementById("saldo").innerText = data.saldo;
                 document.getElementById("masuk").innerText = data.masuk;
@@ -100,25 +107,30 @@
 
                 // Update List
                 let html = "";
-                data.riwayat.forEach(item => {
-                    let warna = item.jenis == "Pemasukan" ? "#10b981" : "#ef4444";
-                    let tanda = item.jenis == "Pemasukan" ? "+" : "-";
-                    html += `
-                    <div class="history-item">
-                        <div class="h-left">
-                            <span class="h-desc">${item.ket}</span>
-                            <span class="h-date">${item.waktu}</span>
-                        </div>
-                        <span class="h-amount" style="color: ${warna}">
-                            ${tanda} ${item.nominal}
-                        </span>
-                    </div>`;
-                });
+                if(data.riwayat && data.riwayat.length > 0) {
+                    data.riwayat.forEach(item => {
+                        let warna = item.jenis == "Pemasukan" ? "#10b981" : "#ef4444";
+                        let tanda = item.jenis == "Pemasukan" ? "+" : "-";
+                        html += `
+                        <div class="history-item">
+                            <div class="h-left">
+                                <span class="h-desc">${item.ket}</span>
+                                <span class="h-date">${item.waktu}</span>
+                            </div>
+                            <span class="h-amount" style="color: ${warna}">
+                                ${tanda} ${item.nominal}
+                            </span>
+                        </div>`;
+                    });
+                } else {
+                    html = "<div style='text-align:center; color:#999;'>Belum ada data</div>";
+                }
                 document.getElementById("riwayatList").innerHTML = html;
                 loader.style.display = "none";
 
             } catch (e) {
-                alert("Gagal memuat data. Periksa internet.");
+                console.error(e);
+                // alert("Gagal koneksi: " + e.toString()); // Dimatikan biar gak ganggu kalau cuma CSP warning
                 loader.style.display = "none";
             }
         }
@@ -142,7 +154,6 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ jenis, nominal, ket })
             }).then(() => {
-                // Karena no-cors, kita asumsikan sukses jika tidak error network
                 document.getElementById("nominal").value = "";
                 document.getElementById("ket").value = "";
                 btn.innerText = "Simpan Transaksi";
@@ -150,7 +161,7 @@
                 
                 // Refresh data
                 loader.style.display = "flex";
-                setTimeout(loadData, 2000); // Jeda dikit biar Google Sheet update dulu
+                setTimeout(loadData, 2000); 
             }).catch(e => {
                 alert("Error saat mengirim data");
                 btn.disabled = false;
@@ -162,4 +173,3 @@
     </script>
 </body>
 </html>
-
