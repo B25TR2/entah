@@ -2,113 +2,162 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keuangan Pribadi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dompetku</title>
     <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center; }
-        h1 { font-size: 18px; color: #555; }
-        .saldo { font-size: 32px; font-weight: bold; color: #2ecc71; margin: 10px 0; }
-        .stats { display: flex; justify-content: space-between; font-size: 14px; }
-        .red { color: #e74c3c; } .green { color: #27ae60; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --white: #ffffff; --green: #10b981; --red: #ef4444; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #334155; }
+        .container { max-width: 480px; margin: 0 auto; }
         
-        .input-group { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #2980b9; }
+        /* Kartu Saldo */
+        .card { background: var(--white); border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+        .label { font-size: 14px; color: #64748b; margin-bottom: 4px; }
+        .saldo-besar { font-size: 36px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        .stat-item { text-align: center; }
+        .money-in { color: var(--green); font-weight: 600; font-size: 16px; }
+        .money-out { color: var(--red); font-weight: 600; font-size: 16px; }
 
-        .history-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .history-meta { font-size: 10px; color: #888; }
+        /* Form Input */
+        .input-box { background: var(--white); padding: 20px; border-radius: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-title { font-size: 16px; font-weight: 700; margin: 0 0 15px 0; }
+        select, input, button { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; }
+        select:focus, input:focus { border-color: var(--primary); }
+        button { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+        /* Riwayat */
+        .history-list { list-style: none; padding: 0; margin: 0; }
+        .history-item { background: var(--white); padding: 15px; margin-bottom: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .h-left { display: flex; flex-direction: column; }
+        .h-desc { font-weight: 500; color: #1e293b; }
+        .h-date { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+        .h-amount { font-weight: 700; font-size: 15px; }
+
+        /* Loading Overlay */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 99; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>Saldo Saat Ini</h1>
-        <div class="saldo" id="saldo">Loading...</div>
-        <div class="stats">
-            <span class="green">Masuk: <span id="masuk">-</span></span>
-            <span class="red">Keluar: <span id="keluar">-</span></span>
+    <div id="loader">
+        <div class="spinner"></div>
+        <div>Memuat Data...</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="label">Total Saldo</div>
+            <h1 class="saldo-besar" id="saldo">Rp 0</h1>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="label">Pemasukan</div>
+                    <div class="money-in" id="masuk">Rp 0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Pengeluaran</div>
+                    <div class="money-out" id="keluar">Rp 0</div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="input-group">
-        <h3>Tambah Transaksi</h3>
-        <select id="jenis">
-            <option value="Pemasukan">📥 Pemasukan</option>
-            <option value="Pengeluaran">📤 Pengeluaran</option>
-        </select>
-        <input type="number" id="nominal" placeholder="Nominal (contoh: 50000)">
-        <input type="text" id="ket" placeholder="Keterangan (contoh: Makan)">
-        <button onclick="kirimData()" id="btnKirim">Simpan Data</button>
-    </div>
+        <div class="input-box">
+            <h3 class="form-title">Tambah Transaksi</h3>
+            <select id="jenis">
+                <option value="Pengeluaran">📤 Pengeluaran</option>
+                <option value="Pemasukan">📥 Pemasukan</option>
+            </select>
+            <input type="number" id="nominal" placeholder="Nominal (Cth: 20000)">
+            <input type="text" id="ket" placeholder="Keterangan (Cth: Nasi Padang)">
+            <button onclick="kirimData()" id="btnSimpan">Simpan Transaksi</button>
+        </div>
 
-    <h3>Riwayat Terakhir</h3>
-    <div id="riwayatList"></div>
+        <h3 style="margin-bottom: 15px; color: #334155;">Riwayat Terakhir</h3>
+        <div id="riwayatList">
+            </div>
+    </div>
 
     <script>
-        // GANTI URL INI DENGAN HASIL DEPLOY GOOGLE SCRIPT ANDA
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHhn-HgotWukaL-XK6ArgFqkLdgaB-YDFIX7fJtPvNbep78ZRv83WPXwbq_zPrjzuYkA/exec";
+        // --- KONFIGURASI ---
+        // Ganti URL di bawah dengan Web App URL Anda
+        const API_URL = "https://script.google.com/macros/s/AKfycbwHhn-HgotWukaL-XK6ArgFqkLdgaB-YDFIX7fJtPvNbep78ZRv83WPXwbq_zPrjzuYkA/exec";
 
-        // 1. Ambil Data saat Web Dibuka
+        const loader = document.getElementById("loader");
+
+        // 1. Ambil Data
         async function loadData() {
             try {
-                let response = await fetch(SCRIPT_URL);
-                let data = await response.json();
+                let res = await fetch(API_URL);
+                let data = await res.json();
                 
+                // Update Angka
                 document.getElementById("saldo").innerText = data.saldo;
                 document.getElementById("masuk").innerText = data.masuk;
                 document.getElementById("keluar").innerText = data.keluar;
 
+                // Update List
                 let html = "";
                 data.riwayat.forEach(item => {
-                    let warna = item.jenis == "Pemasukan" ? "green" : "red";
+                    let warna = item.jenis == "Pemasukan" ? "#10b981" : "#ef4444";
+                    let tanda = item.jenis == "Pemasukan" ? "+" : "-";
                     html += `
-                        <div class="history-item" style="border-left: 4px solid ${warna == 'green' ? '#2ecc71' : '#e74c3c'}">
-                            <div>
-                                <strong>${item.ket}</strong><br>
-                                <span class="history-meta">${item.tanggal}</span>
-                            </div>
-                            <div style="color: ${warna == 'green' ? '#27ae60' : '#c0392b'}; font-weight:bold;">
-                                ${item.nominal}
-                            </div>
-                        </div>`;
+                    <div class="history-item">
+                        <div class="h-left">
+                            <span class="h-desc">${item.ket}</span>
+                            <span class="h-date">${item.waktu}</span>
+                        </div>
+                        <span class="h-amount" style="color: ${warna}">
+                            ${tanda} ${item.nominal}
+                        </span>
+                    </div>`;
                 });
                 document.getElementById("riwayatList").innerHTML = html;
+                loader.style.display = "none";
+
             } catch (e) {
-                console.log("Error:", e);
-                document.getElementById("saldo").innerText = "Error Koneksi";
+                alert("Gagal memuat data. Periksa internet.");
+                loader.style.display = "none";
             }
         }
 
-        // 2. Kirim Data ke Google Sheet
+        // 2. Kirim Data
         function kirimData() {
             let jenis = document.getElementById("jenis").value;
             let nominal = document.getElementById("nominal").value;
             let ket = document.getElementById("ket").value;
-            let btn = document.getElementById("btnKirim");
+            let btn = document.getElementById("btnSimpan");
 
-            if(!nominal) return alert("Isi nominal dulu!");
+            if (!nominal || !ket) return alert("Nominal dan Keterangan wajib diisi!");
 
-            btn.innerText = "Mengirim...";
+            btn.innerText = "Menyimpan...";
             btn.disabled = true;
 
-            // Gunakan mode no-cors untuk kirim data ke GAS (keterbatasan browser)
-            // Atau pakai fetch POST biasa dengan payload text
-            fetch(SCRIPT_URL, {
+            // Kirim via POST (no-cors agar tidak error di browser sederhana)
+            fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "input_web", jenis, nominal, ket })
+                mode: "no-cors", 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jenis, nominal, ket })
             }).then(() => {
-                alert("Berhasil!");
-                location.reload(); // Refresh halaman untuk update saldo
+                // Karena no-cors, kita asumsikan sukses jika tidak error network
+                document.getElementById("nominal").value = "";
+                document.getElementById("ket").value = "";
+                btn.innerText = "Simpan Transaksi";
+                btn.disabled = false;
+                
+                // Refresh data
+                loader.style.display = "flex";
+                setTimeout(loadData, 2000); // Jeda dikit biar Google Sheet update dulu
             }).catch(e => {
-                alert("Gagal kirim.");
-                btn.innerText = "Simpan Data";
+                alert("Error saat mengirim data");
                 btn.disabled = false;
             });
         }
 
-        // Jalankan saat load
+        // Jalankan saat pertama kali buka
         loadData();
     </script>
 </body>
